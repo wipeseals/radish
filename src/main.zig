@@ -20,5 +20,10 @@ pub fn main() !void {
             // print the color
             try file_writer.print("{d} {d} {d}\n", .{ r, g, b });
         }
+        std.debug.print("progress: {d} % ({d}/{d})\n", .{
+            (x * 100) / width,
+            x,
+            width,
+        });
     }
 }
