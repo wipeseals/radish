@@ -37,11 +37,11 @@ const Vec3 = struct {
             .z = self.x * other.y - self.y * other.x,
         };
     }
-    fn to_string(self: Vec3) []const u8 {
-        return std.fmt.allocPrint(allocator, "{d} {d} {d}", .{
-            @as(u8, (255.999 * self.x) & 0xff),
-            @as(u8, (255.999 * self.y) & 0xff),
-            @as(u8, (255.999 * self.z) & 0xff),
+    fn to_string(self: Vec3) ![]const u8 {
+        return try std.fmt.allocPrint(allocator, "{d} {d} {d} ", .{
+            @as(u8, @intFromFloat(255.999 * self.x)) & 0xff,
+            @as(u8, @intFromFloat(255.999 * self.y)) & 0xff,
+            @as(u8, @intFromFloat(255.999 * self.z)) & 0xff,
         });
     }
 };
@@ -58,15 +58,15 @@ pub fn main() !void {
     // print ppm format
     try file_writer.print("P3\n{d} {d}\n255\n", .{ width, height });
     for (0..width) |x| {
-        for (0..height) |_| {
+        for (0..height) |y| {
             const color = Color.new(
-                0.1,
-                0.2,
+                @as(f32, @floatFromInt(x)) / @as(f32, @floatFromInt(width - 1)),
+                @as(f32, @floatFromInt(y)) / @as(f32, @floatFromInt(height - 1)),
                 0.25,
             );
 
             // print the color
-            try file_writer.write(color.to_string());
+            _ = try file_writer.write(try color.to_string());
         }
         std.debug.print("progress: {d} % ({d}/{d})\n", .{
             (x * 100) / width,
