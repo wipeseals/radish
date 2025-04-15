@@ -70,13 +70,13 @@ pub fn bg_color(ray: Ray) Color {
 pub fn hit_sphere(center: Vec3, radius: f32, ray: Ray) f32 {
     const oc = ray.origin.sub(&center);
     const a = ray.direction.length_squared();
-    const b = oc.dot(&ray.direction) * 2.0;
+    const half_b = oc.dot(&ray.direction);
     const c = oc.length_squared() - radius * radius;
-    const discriminant = b * b - 4.0 * a * c;
+    const discriminant = half_b * half_b - a * c;
     if (discriminant < 0.0) {
         return -1.0;
     } else {
-        return (-b - @sqrt(discriminant)) / (2.0 * a);
+        return (-half_b - @sqrt(discriminant)) / a;
     }
 }
 
