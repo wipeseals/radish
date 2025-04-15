@@ -1,5 +1,4 @@
 const std = @import("std");
-const allocator = std.heap.page_allocator;
 
 const Vec3 = struct {
     x: f32,
@@ -40,7 +39,7 @@ const Vec3 = struct {
     fn unit_vector(self: Vec3) Vec3 {
         return self.div(self.length());
     }
-    fn to_string(self: Vec3) ![]const u8 {
+    fn to_string(self: Vec3, allocator: std.mem.Allocator) ![]const u8 {
         return try std.fmt.allocPrint(allocator, "{d} {d} {d} ", .{
             @as(u8, @intFromFloat(255.999 * self.x)) & 0xff,
             @as(u8, @intFromFloat(255.999 * self.y)) & 0xff,
@@ -68,7 +67,24 @@ pub fn bg_color(ray: Ray) Color {
     return Color.new(1.0, 1.0, 1.0).mul(1.0 - t).add(&Color.new(0.5, 0.7, 1.0).mul(t));
 }
 
+pub fn hit_sphere(center: Vec3, radius: f32, ray: Ray) bool {
+    const oc = ray.origin.sub(&center);
+    const a = ray.direction.length_squared();
+    const b = oc.dot(&ray.direction) * 2.0;
+    const c = oc.length_squared() - radius * radius;
+    const discriminant = b * b - 4.0 * a * c;
+    return discriminant > 0;
+}
+
+pub fn calc_ray_color(ray: Ray) Color {
+    if (hit_sphere(Vec3.new(0.0, 0.0, -1.0), 0.5, ray)) {
+        return Color.new(1.0, 0.0, 0.0);
+    }
+    return bg_color(ray);
+}
+
 pub fn main() !void {
+    const allocator = std.heap.page_allocator;
     const filename = "output.ppm";
     const file = try std.fs.cwd().createFile(filename, .{});
     const file_writer = file.writer();
@@ -80,10 +96,11 @@ pub fn main() !void {
 
     const viewport_height = 2.0;
     const viewport_width: f32 = aspect_ratio * viewport_height;
+    const focal_length: f32 = 1.0;
     const origin = Vec3.new(0.0, 0.0, 0.0);
     const horizontal = Vec3.new(viewport_width, 0.0, 0.0);
     const vertical = Vec3.new(0.0, viewport_height, 0.0);
-    const lower_left_corner = origin.sub(&horizontal.div(2)).sub(&vertical.div(2)).sub(&Vec3.new(0.0, 1.0, 1.0));
+    const lower_left_corner = origin.sub(&horizontal.div(2)).sub(&vertical.div(2)).sub(&Vec3.new(0.0, 0.0, focal_length));
 
     // print ppm format
     try file_writer.print("P3\n{d} {d}\n255\n", .{ image_width, image_height });
@@ -98,9 +115,9 @@ pub fn main() !void {
                 origin,
                 lower_left_corner.add(&horizontal.mul(u)).add(&vertical.mul(v)).sub(&origin),
             );
-            const color = bg_color(ray);
+            const color = calc_ray_color(ray);
             // print the color
-            _ = try file_writer.write(try color.to_string());
+            _ = try file_writer.write(try color.to_string(allocator));
         }
         std.debug.print("progress: {d}/{d}\n", .{
             j,
