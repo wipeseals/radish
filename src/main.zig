@@ -67,18 +67,24 @@ pub fn bg_color(ray: Ray) Color {
     return Color.new(1.0, 1.0, 1.0).mul(1.0 - t).add(&Color.new(0.5, 0.7, 1.0).mul(t));
 }
 
-pub fn hit_sphere(center: Vec3, radius: f32, ray: Ray) bool {
+pub fn hit_sphere(center: Vec3, radius: f32, ray: Ray) f32 {
     const oc = ray.origin.sub(&center);
     const a = ray.direction.length_squared();
     const b = oc.dot(&ray.direction) * 2.0;
     const c = oc.length_squared() - radius * radius;
     const discriminant = b * b - 4.0 * a * c;
-    return discriminant > 0;
+    if (discriminant < 0.0) {
+        return -1.0;
+    } else {
+        return (-b - @sqrt(discriminant)) / (2.0 * a);
+    }
 }
 
 pub fn calc_ray_color(ray: Ray) Color {
-    if (hit_sphere(Vec3.new(0.0, 0.0, -1.0), 0.5, ray)) {
-        return Color.new(1.0, 0.0, 0.0);
+    const t = hit_sphere(Vec3.new(0.0, 0.0, -1.0), 0.5, ray);
+    if (t > 0.0) {
+        const N = ray.at(t).sub(&Vec3.new(0.0, 0.0, -1.0)).unit_vector();
+        return Color.new(N.x + 1.0, N.y + 1.0, N.z + 1.0).mul(0.5);
     }
     return bg_color(ray);
 }
