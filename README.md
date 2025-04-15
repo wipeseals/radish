@@ -1,6 +1,6 @@
 # radish
 
-Ray Tracing in One Weekend
+Ray Tracing in One Weekend implemented in zig.
 
 ## References
 
