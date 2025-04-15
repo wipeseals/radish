@@ -37,6 +37,9 @@ const Vec3 = struct {
             .z = self.x * other.y - self.y * other.x,
         };
     }
+    fn unit_vector(self: Vec3) Vec3 {
+        return self.div(self.length());
+    }
     fn to_string(self: Vec3) ![]const u8 {
         return try std.fmt.allocPrint(allocator, "{d} {d} {d} ", .{
             @as(u8, @intFromFloat(255.999 * self.x)) & 0xff,
@@ -60,8 +63,8 @@ const Ray = struct {
 };
 
 pub fn bg_color(ray: Ray) Color {
-    const unit_direction = ray.direction.div(ray.direction.length());
-    const t = 0.5 * (unit_direction.y + 1.0);
+    const unit_vector = ray.direction.unit_vector();
+    const t = 0.5 * (unit_vector.y + 1.0);
     return Color.new(1.0, 1.0, 1.0).mul(1.0 - t).add(&Color.new(0.5, 0.7, 1.0).mul(t));
 }
 
