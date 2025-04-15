@@ -1,5 +1,5 @@
 {
-    description = "A flake for a Python environment";
+    description = "A flake providing a development shell with Zig compiler.";
 
     inputs = {
         nixpkgs.url = "github:NixOS/nixpkgs";
