@@ -34,3 +34,12 @@ pub fn random_unit_vector() vector.Vec3 {
     const r = @sqrt(1.0 - z * z);
     return vector.Vec3.new(r * @cos(a), r * @sin(a), z);
 }
+
+pub fn random_in_hemisphere(normal: *const vector.Vec3) vector.Vec3 {
+    const in_unit_sphere = random_in_unit_sphere();
+    if (in_unit_sphere.dot(normal) > 0.0) {
+        return in_unit_sphere;
+    } else {
+        return in_unit_sphere.mul(-1.0);
+    }
+}
