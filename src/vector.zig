@@ -1,4 +1,5 @@
 const std = @import("std");
+const math = @import("math.zig");
 
 pub const Vec3 = struct {
     x: f32,
@@ -39,11 +40,17 @@ pub const Vec3 = struct {
     pub fn unit_vector(self: Vec3) Vec3 {
         return self.div(self.length());
     }
-    pub fn to_string(self: Vec3, allocator: std.mem.Allocator) ![]const u8 {
+    pub fn to_string(self: Vec3, sample_per_pixel: u32, allocator: std.mem.Allocator) ![]const u8 {
+        // normalize the color values to 0-255 range & gamma correction
+        const scale = 1.0 / @as(f32, @floatFromInt(sample_per_pixel));
+        const r = @sqrt(self.x * scale);
+        const g = @sqrt(self.y * scale);
+        const b = @sqrt(self.z * scale);
+
         return try std.fmt.allocPrint(allocator, "{d} {d} {d} ", .{
-            @as(u8, @intFromFloat(255.999 * self.x)) & 0xff,
-            @as(u8, @intFromFloat(255.999 * self.y)) & 0xff,
-            @as(u8, @intFromFloat(255.999 * self.z)) & 0xff,
+            @as(u8, @intFromFloat(256 * math.clamp(r, 0.0, 0.999))) & 0xff,
+            @as(u8, @intFromFloat(256 * math.clamp(g, 0.0, 0.999))) & 0xff,
+            @as(u8, @intFromFloat(256 * math.clamp(b, 0.0, 0.999))) & 0xff,
         });
     }
 };
