@@ -13,14 +13,15 @@ pub fn bg_color(ray_param: *const ray.Ray) vector.Color {
     return vector.Color.new(1.0, 1.0, 1.0).mul(1.0 - t).add(&vector.Color.new(0.5, 0.7, 1.0).mul(t));
 }
 
-pub fn calc_ray_color(ray_param: *const ray.Ray, hittable_list: *const hit.HittableList) vector.Color {
+pub fn calc_ray_color(ray_param: *const ray.Ray, hittable_list: *const hit.HittableList, depth: u32) vector.Color {
+    if (depth <= 0) {
+        return vector.Color.new(0.0, 0.0, 0.0);
+    }
     var record = hit.HitRecord.new(0.0, vector.Vec3.new(0.0, 0.0, 0.0), vector.Vec3.new(0.0, 0.0, 0.0));
     if (hittable_list.hit(ray_param, 0.0, math.inf, &record)) {
-        return vector.Color.new(
-            record.normal.x + 1.0,
-            record.normal.y + 1.0,
-            record.normal.z + 1.0,
-        ).mul(0.5);
+        const target = record.p.add(&record.normal).add(&random.random_in_unit_sphere());
+        const new_ray = ray.Ray.new(record.p, target.sub(&record.p));
+        return calc_ray_color(&new_ray, hittable_list, depth - 1).mul(0.5);
     }
     return bg_color(ray_param);
 }
@@ -38,6 +39,7 @@ pub fn main() !void {
     const viewport_height = 2.0;
     const focal_length: f32 = 1.0;
     const sample_per_pixel: u32 = 100;
+    const max_depth: u32 = 50;
 
     // create a camera
     const cam = camera.Camera.new(aspect_ratio, viewport_height, focal_length);
@@ -62,7 +64,7 @@ pub fn main() !void {
                 const u = @as(f32, @floatFromInt(x)) + random.random_f32() / @as(f32, sample_per_pixel);
                 const v = @as(f32, @floatFromInt(y)) + random.random_f32() / @as(f32, sample_per_pixel);
                 const camera_ray = cam.get_ray(u / @as(f32, image_width - 1), v / @as(f32, image_height - 1));
-                color = color.add(&calc_ray_color(&camera_ray, &hittable_list));
+                color = color.add(&calc_ray_color(&camera_ray, &hittable_list, max_depth));
             }
             // print the color
             {
