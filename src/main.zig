@@ -1,5 +1,6 @@
 const std = @import("std");
 const math = @import("math.zig");
+const random = @import("random.zig");
 const Vec3 = @import("vector.zig").Vec3;
 const Color = @import("vector.zig").Color;
 const Ray = @import("ray.zig").Ray;
@@ -7,6 +8,7 @@ const HitRecord = @import("hit.zig").HitRecord;
 const Sphere = @import("sphere.zig").Sphere;
 const Hittable = @import("hit.zig").Hittable;
 const HittableList = @import("hit.zig").HittableList;
+const Camera = @import("camera.zig").Camera;
 
 pub fn bg_color(ray: *const Ray) Color {
     const unit_vector = ray.direction.unit_vector();
@@ -36,14 +38,12 @@ pub fn main() !void {
     const aspect_ratio: f32 = 16.0 / 9.0;
     const image_width: u32 = 384;
     const image_height: u32 = @as(u32, @intFromFloat(@as(f32, image_width) / @as(f32, aspect_ratio)));
-
     const viewport_height = 2.0;
-    const viewport_width: f32 = aspect_ratio * viewport_height;
     const focal_length: f32 = 1.0;
-    const origin = Vec3.new(0.0, 0.0, 0.0);
-    const horizontal = Vec3.new(viewport_width, 0.0, 0.0);
-    const vertical = Vec3.new(0.0, viewport_height, 0.0);
-    const lower_left_corner = origin.sub(&horizontal.div(2)).sub(&vertical.div(2)).sub(&Vec3.new(0.0, 0.0, focal_length));
+    const sample_per_pixel: u32 = 100;
+
+    // create a camera
+    const camera = Camera.new(aspect_ratio, viewport_height, focal_length);
 
     // create a list of spheres
     const hittable = [_]Hittable{
@@ -58,17 +58,18 @@ pub fn main() !void {
         const y = image_height - j - 1;
         for (0..image_width) |i| { // left to right
             const x = i;
-            // calculate the ray for the pixel
-            const u = @as(f32, @floatFromInt(x)) / @as(f32, @floatFromInt(image_width - 1));
-            const v = @as(f32, @floatFromInt(y)) / @as(f32, @floatFromInt(image_height - 1));
-            const ray = Ray.new(
-                origin,
-                lower_left_corner.add(&horizontal.mul(u)).add(&vertical.mul(v)).sub(&origin),
-            );
-            const color = calc_ray_color(&ray, &hittable_list);
+
+            // random samples
+            var color = Color.new(0.0, 0.0, 0.0);
+            for (0..sample_per_pixel) |_| {
+                const u = @as(f32, @floatFromInt(x)) + random.random_f32() / @as(f32, sample_per_pixel);
+                const v = @as(f32, @floatFromInt(y)) + random.random_f32() / @as(f32, sample_per_pixel);
+                const ray = camera.get_ray(u / @as(f32, image_width - 1), v / @as(f32, image_height - 1));
+                color = color.add(&calc_ray_color(&ray, &hittable_list));
+            }
             // print the color
             {
-                const color_text = try color.to_string(allocator);
+                const color_text = try color.to_string(sample_per_pixel, allocator);
                 defer allocator.free(color_text);
                 _ = try file_writer.write(color_text);
             }
