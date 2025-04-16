@@ -19,7 +19,7 @@ pub fn calc_ray_color(ray_param: *const ray.Ray, hittable_list: *const hit.Hitta
     }
     var record = hit.HitRecord.new(0.0, vector.Vec3.new(0.0, 0.0, 0.0), vector.Vec3.new(0.0, 0.0, 0.0));
     if (hittable_list.hit(ray_param, 0.0, math.inf, &record)) {
-        const target = record.p.add(&record.normal).add(&random.random_in_unit_sphere());
+        const target = record.p.add(&record.normal).add(&random.random_unit_vector());
         const new_ray = ray.Ray.new(record.p, target.sub(&record.p));
         return calc_ray_color(&new_ray, hittable_list, depth - 1).mul(0.5);
     }
