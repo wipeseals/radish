@@ -2,6 +2,14 @@
 
 Ray Tracing in One Weekend implemented in zig.
 
+![radish](/misc/ss.png)
+
+## Running
+
+```bash
+zig build run
+```
+
 ## References
 
 - [Ray Tracing in One Weekend](https://raytracing.github.io/books/RayTracingInOneWeekend.html)
